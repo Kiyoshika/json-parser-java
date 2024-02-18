@@ -35,6 +35,6 @@ java {
 
 tasks.jar {
   manifest {
-    archiveBaseName.set("json-parser-0.1")
+    archiveBaseName.set("json-parser-0.2")
   }
 }

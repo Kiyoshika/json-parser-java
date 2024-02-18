@@ -4,11 +4,13 @@ This is a very minimalistic JSON parser I wrote to practice Java. It is not feat
 The parser works as a very basic state machine that uses either expected tokens or termination tokens to proceed to the next state.
 
 ## Current Features
-* Can parse `String`, `int`, `double` and `Object` (nested JSON)
+* Can parse `String`, `int`, `double`, `Object` (nested JSON) and `null` values
 
 ## Upcoming Features
-* Support for `null` and `Array`
+* Support for `Array`
 * Reflection to parse a JSON directly into a user-defined class
+* Modifying JSON after parsing
+* Writing JSON back to string
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
@@ -18,14 +20,27 @@ You can also take a look at the tests, but here's some basic usage of the librar
 
 ```java
 JsonParser parser = new JsonParser();
-JsonResult result = parser.parse("{ \"key\": { \"innerKey\": 10 }, \"key2\": 1.23, \"key3\": \"Hello, world!\" }");
+String jsonString = """
+    {
+        \"key\": {
+            \"innerKey\": 10
+        },
+        \"key2\": 1.23,
+        \"key3\": \"Hello, world!\",
+        \"key4\": null
+    }
+    """;
+JsonResult result = parser.parse(jsonString);
 
 int innerKey = result.getObject("key").getInt("innerkey"); // 10
 double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
+boolean key4 = result.isNull("key4"); // true
 ```
 
 Keys and values must use DOUBLE quotes and NOT single quotes!
+
+DO NOT use `get()` methods to check if a value is null since this will return null if the key is not present in JSON. Use the `isNull()` method instead.
 
 Currently, a `JsonResult` object is returned which has basic getters with type conversions but will hopefully feature reflection to parse directly into a user-defined class. `JsonResult` also has a generic `get()` method which returns an `Object` type so you would have to do the conversion yourself. This method is not recommended unless you are doing something out of the ordinary.
 
