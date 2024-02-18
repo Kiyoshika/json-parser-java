@@ -3,6 +3,11 @@ This is a very minimalistic JSON parser I wrote to practice Java. It is not feat
 
 The parser works as a very basic state machine that uses either expected tokens or termination tokens to proceed to the next state.
 
+## Warning
+The `master` branch is the active development branch and my be unstable compared to the releases.
+
+If you're looking for a more "stable" version, check the [releases](https://github.com/Kiyoshika/json-parser-java/releases).
+
 ## Current Features
 * Can parse `String`, `int`, `double`, `Object` (nested JSON) and `null` values
 
