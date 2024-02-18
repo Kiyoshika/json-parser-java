@@ -27,7 +27,7 @@ public class JsonParser {
             }
 
             // consume whitespace
-            if (currentChar == ' ' || currentChar == '\t' || currentChar == '\n' || currentChar == '\r') {
+            if (this.isWhitespace(currentChar)) {
                 if (this.currentValue.length() == 0 || // special case when we have a space character before adding any content to the value
                     (this.currentState != JsonState.KEY_CONTENT &&
                     this.currentState != JsonState.VALUE_CONTENT)) {
@@ -63,6 +63,10 @@ public class JsonParser {
         return this.parseResult;
     }
 
+    private boolean isWhitespace(char currentChar) {
+        return currentChar == ' ' || currentChar == '\t' || currentChar == '\n' || currentChar == '\r';
+    }
+
     private int setState(JsonState newState, String jsonString, int jsonStringIndex, char currentChar) throws Exception {
         int indexOffset = 0;
         this.currentState = newState;
@@ -94,12 +98,16 @@ public class JsonParser {
                 break;
             case VALUE_CONTENT:
                 this.validTokens = null;
-                this.terminatingTokens = ",{}";
+                this.terminatingTokens = ",{}n";
                 this.nextState = JsonState.VALUE_KEY_SEPARATOR;
                 break;
             case VALUE_KEY_SEPARATOR: {
                 indexOffset = this.insertValue(jsonString, jsonStringIndex, currentChar);
                 currentChar = jsonString.charAt(jsonStringIndex + indexOffset);
+                while (this.isWhitespace(currentChar)) {
+                    indexOffset += 1;
+                    currentChar = jsonString.charAt(jsonStringIndex + indexOffset);
+                }
                 this.validTokens = ",}";
                 this.terminatingTokens = null;
                 if (currentChar == ',') {
@@ -134,6 +142,16 @@ public class JsonParser {
             this.parseResult.add(keyString, valueString);
         } else if (startsWithQuote) {
             this.parseResult.add(keyString, "");
+
+        // null values
+        } else if (currentChar == 'n') {
+            if ((jsonString.length() - jsonStringIndex < 4) ||
+                !jsonString.substring(jsonStringIndex, jsonStringIndex + 4).equals("null")) {
+                throw new Exception("Couldn't parse null value.");
+            }
+
+            this.parseResult.addNull(keyString);
+            return 4; /* length of "null" */
 
         // object values
         } else if (currentChar == '{') {

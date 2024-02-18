@@ -1,12 +1,22 @@
 package org.json;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class JsonResult {
     private HashMap<String, Object> items = new HashMap<>();
+    private HashSet<String> nullValues = new HashSet();
 
     public boolean containsKey(String key) {
         return this.items.containsKey(key);
+    }
+
+    public boolean isNull(String key) {
+        return this.nullValues.contains(key);
+    }
+
+    public void addNull(String key) {
+        this.nullValues.add(key);
     }
     
     public void add(String key, Object value) {

@@ -62,4 +62,18 @@ public class JsonParserTest {
         JsonParser parser = new JsonParser();
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": 1, }"));
     }
+
+    @Test public void nullValues() throws Exception {
+        JsonParser parser = new JsonParser();
+        JsonResult result = parser.parse("{ \"key\": null, \"key2\": 1 }");
+        assertEquals(result.isNull("key"), true);
+        assertEquals(result.isNull("key2"), false);
+    }
+
+    @Test public void badNullValues() throws Exception {
+        JsonParser parser = new JsonParser();
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": none }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": NULL }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": n"));
+    }
 }
