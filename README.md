@@ -30,4 +30,6 @@ Keys and values must use DOUBLE quotes and NOT single quotes!
 Currently, a `JsonResult` object is returned which has basic getters with type conversions but will hopefully feature reflection to parse directly into a user-defined class. `JsonResult` also has a generic `get()` method which returns an `Object` type so you would have to do the conversion yourself. This method is not recommended unless you are doing something out of the ordinary.
 
 ## Building
-This is packaged as a java library, so running `./gradlew build` from the root directory will build a jar file under `/lib/build/libs/json-parser-[VERSION].jar` where `[VERSION]` is the version of the library you're building.
+* Run `./gradlew build` from the root directory
+* A jar file will be found in `./lib/build/libs/json-parser-[VERSION].jar`
+    * `[VERSION]` is the version of the library you're building.
