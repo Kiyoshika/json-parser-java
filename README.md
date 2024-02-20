@@ -9,10 +9,9 @@ The `master` branch is the active development branch and my be unstable compared
 If you're looking for a more "stable" version, check the [releases](https://github.com/Kiyoshika/json-parser-java/releases).
 
 ## Current Features
-* Can parse `String`, `int`, `double`, `Object` (nested JSON) and `null` values
+* Can parse `String`, `int`, `double`, `Object` (nested JSON), `null` and `Array` values.
 
 ## Upcoming Features
-* Support for `Array`
 * Reflection to parse a JSON directly into a user-defined class
 * Modifying JSON after parsing
 * Writing JSON back to string
@@ -32,7 +31,8 @@ String jsonString = """
         },
         \"key2\": 1.23,
         \"key3\": \"Hello, world!\",
-        \"key4\": null
+        \"key4\": null,
+        \"key5\": [1, 2.2, [1, 2, 3], { \"inner key\": \"inner value\"}]
     }
     """;
 JsonResult result = parser.parse(jsonString);
@@ -41,6 +41,13 @@ int innerKey = result.getObject("key").getInt("innerkey"); // 10
 double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
 boolean key4 = result.isNull("key4"); // true
+
+// handling arrays
+JsonArray key5 = result.getArray("key5");
+int arrayValue1 = key5.getInt(0); // 1
+double arrayValue2 = key5.getDouble(1); // 2.2
+JsonArray arrayValue3 = key5.getArray(2); // [1, 2, 3]
+JsonResult arrayValue4 = key5.getObject(3); // { "inner key": "inner value" }
 ```
 
 Keys and values must use DOUBLE quotes and NOT single quotes!
