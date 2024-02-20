@@ -41,28 +41,70 @@ public class JsonParser {
                 throw new Exception("Unexpected token '" + currentChar + "'.");
             }
 
-            if (!this.valueIsString && this.terminatingTokens != null && this.terminatingTokens.indexOf(currentChar) != -1) {
-                i += this.setState(this.nextState, jsonString, i, currentChar);
-            }
-
-            // consume whitespace
-            if (this.isWhitespace(currentChar)) {
-                if ((this.currentState == JsonState.VALUE_CONTENT && this.currentValue.length() == 0) || // special case when we have a space character before adding any content to the value
-                    (this.currentState != JsonState.KEY_CONTENT && this.currentState != JsonState.VALUE_CONTENT)) {
-                        continue;
+            else if (!this.valueIsString && this.terminatingTokens != null && this.terminatingTokens.indexOf(currentChar) != -1) {
+                switch (currentChar) {
+                    case '"': {
+                        if (this.currentState == JsonState.KEY_CONTENT) {
+                            this.nextState = JsonState.KEY_VALUE_SEPARATOR;
+                        }
                     }
+                    break;
+
+                    case ',': {
+                        if (this.nextState == JsonState.VALUE_KEY_SEPARATOR) {
+                            this.nextState = JsonState.START_KEY_QUOTE;
+                            this.insertValue(jsonString, i, currentChar);
+                        }
+                    }
+                    break;
+
+                    case '}': {
+                        if (this.nextState == JsonState.VALUE_KEY_SEPARATOR) {
+                            this.nextState = JsonState.END_BODY;
+                            this.insertValue(jsonString, i, currentChar);
+                        }
+                    }
+                    break;
+
+                    case '{': {
+                        // when encounting a '{' while parsing the value content, we consume the string until the appropriate
+                        // '}' is found and parse the body. Then we move the index over to the end and check if the next character
+                        // is ',' or '}' to determine if we should parse a new key or close the body
+                        if (this.currentState == JsonState.VALUE_CONTENT) {
+                            this.nextState = JsonState.VALUE_KEY_SEPARATOR;
+                            i += this.insertValue(jsonString, i, currentChar);
+                            currentChar = jsonString.charAt(i);
+                            while (this.isWhitespace(currentChar) && i < jsonString.length()) {
+                                i += 1;
+                                currentChar = jsonString.charAt(i);
+                            }
+                            if (currentChar == ',') {
+                                this.nextState = JsonState.START_KEY_QUOTE;
+                            } else if (currentChar == '}') {
+                                this.nextState = JsonState.END_BODY;
+                            }
+                        }
+                    }
+                    break;
+
+                    /* TODO: add other terminators like 'n', '[', etc. */
+                }
+
+                this.setState(this.nextState, jsonString, i, currentChar);
             }
 
-            switch (this.currentState) {
-                case KEY_CONTENT:
-                    this.currentKey.append(currentChar);
-                    break;
-                case VALUE_CONTENT:
-                    this.currentValue.append(currentChar);
-                    break;
-                default:
-                    i += this.setState(this.nextState, jsonString, i, currentChar);
-                    break;
+            else {
+                switch (this.currentState) {
+                    case KEY_CONTENT:
+                        this.currentKey.append(currentChar);
+                        break;
+                    case VALUE_CONTENT:
+                        this.currentValue.append(currentChar);
+                        break;
+                    default:
+                        this.setState(this.nextState, jsonString, i, currentChar);
+                        break;
+                }
             }
 
         }
@@ -78,8 +120,7 @@ public class JsonParser {
         return currentChar == ' ' || currentChar == '\t' || currentChar == '\n' || currentChar == '\r';
     }
 
-    private int setState(JsonState newState, String jsonString, int jsonStringIndex, char currentChar) throws Exception {
-        int indexOffset = 0;
+    private void setState(JsonState newState, String jsonString, int jsonStringIndex, char currentChar) throws Exception {
         this.currentState = newState;
         switch (newState) {
             case START_BODY:
@@ -112,21 +153,7 @@ public class JsonParser {
                 this.terminatingTokens = ",{}n[";
                 this.nextState = JsonState.VALUE_KEY_SEPARATOR;
                 break;
-            case VALUE_KEY_SEPARATOR: {
-                /* TODO: this needs some rework because it's too confusing */
-                indexOffset = this.insertValue(jsonString, jsonStringIndex, currentChar);
-                currentChar = jsonString.charAt(indexOffset);
-                while (this.isWhitespace(currentChar) && indexOffset < jsonString.length()) {
-                    currentChar = jsonString.charAt(indexOffset);
-                    indexOffset += 1;
-                }
-                this.validTokens = ",}";
-                this.terminatingTokens = null;
-                break;
-            }
         }
-
-        return indexOffset;
     }
 
     private JsonType getValueType(char currentChar, String value) {
