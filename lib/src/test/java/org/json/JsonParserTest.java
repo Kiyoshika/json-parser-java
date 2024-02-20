@@ -16,7 +16,7 @@ public class JsonParserTest {
     @Test public void multipleUniqueKeys() throws Exception {
         JsonParser parser = new JsonParser();
         JsonResult result = parser.parse("{ \"key1\": \"value1\", \"key2\": 22.23, \"key3\": -123 }");
-        assertEquals(result.get("key1"), "value1");
+        assertEquals(result.getString("key1"), "value1");
         assertEquals(result.getDouble("key2"), 22.23, 0.00);
         assertEquals(result.getInt("key3"), -123);
     }
@@ -68,6 +68,22 @@ public class JsonParserTest {
         JsonResult result = parser.parse("{ \"key\": null, \"key2\": 1 }");
         assertEquals(result.isNull("key"), true);
         assertEquals(result.isNull("key2"), false);
+    }
+
+    @Test public void arrayValue() throws Exception {
+        JsonParser parser = new JsonParser();
+        JsonResult result = parser.parse("{ \"key\": [\"string one\", -123, 2.345, null, [1, 2, 3], { \"inner key\": \"value\" }]}");
+        JsonArray array = result.getArray("key");
+        assertEquals(array.getString(0), "string one");
+        assertEquals(array.getInt(1), -123);
+        assertEquals(array.getDouble(2), 2.345, 0.00);
+        assertEquals(array.isNull(3), true);
+        JsonArray innerArray = array.getArray(4);
+        assertEquals(innerArray.getInt(0), 1);
+        assertEquals(innerArray.getInt(1), 2);
+        assertEquals(innerArray.getInt(2), 3);
+        JsonResult innerObject = array.getObject(5);
+        assertEquals(innerObject.getString("inner key"), "value");
     }
 
     @Test public void badNullValues() throws Exception {

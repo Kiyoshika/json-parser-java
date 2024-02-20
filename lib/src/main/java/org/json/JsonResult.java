@@ -42,4 +42,8 @@ public class JsonResult {
     public double getDouble(String key) {
         return (double)this.get(key);
     }
+
+    public JsonArray getArray(String key) {
+        return (JsonArray)this.get(key);
+    }
 }

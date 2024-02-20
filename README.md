@@ -32,7 +32,8 @@ String jsonString = """
         },
         \"key2\": 1.23,
         \"key3\": \"Hello, world!\",
-        \"key4\": null
+        \"key4\": null,
+        \"key5\": [1, 2.2, [1, 2, 3], { \"inner key\": \"inner value\"}]
     }
     """;
 JsonResult result = parser.parse(jsonString);
@@ -41,6 +42,12 @@ int innerKey = result.getObject("key").getInt("innerkey"); // 10
 double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
 boolean key4 = result.isNull("key4"); // true
+
+JsonArray key5 = result.getArray("key5");
+int arrayValue1 = key5.getInt(0); // 1
+double arrayValue2 = key5.getDouble(1); // 2.2
+JsonArray arrayValue3 = key5.getArray(2); // [1, 2, 3]
+JsonResult arrayValue4 = key5.getObject(3); // { "inner key": "inner value" }
 ```
 
 Keys and values must use DOUBLE quotes and NOT single quotes!

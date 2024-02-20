@@ -1,6 +1,9 @@
 
 package org.json;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class JsonParser {
     private JsonState currentState;
     private JsonState nextState;
@@ -28,9 +31,8 @@ public class JsonParser {
 
             // consume whitespace
             if (this.isWhitespace(currentChar)) {
-                if (this.currentValue.length() == 0 || // special case when we have a space character before adding any content to the value
-                    (this.currentState != JsonState.KEY_CONTENT &&
-                    this.currentState != JsonState.VALUE_CONTENT)) {
+                if ((this.currentState == JsonState.VALUE_CONTENT && this.currentValue.length() == 0) || // special case when we have a space character before adding any content to the value
+                    (this.currentState != JsonState.KEY_CONTENT && this.currentState != JsonState.VALUE_CONTENT)) {
                         continue;
                     }
             }
@@ -41,6 +43,14 @@ public class JsonParser {
 
             if (!this.valueIsString && this.terminatingTokens != null && this.terminatingTokens.indexOf(currentChar) != -1) {
                 i += this.setState(this.nextState, jsonString, i, currentChar);
+            }
+
+            // consume whitespace
+            if (this.isWhitespace(currentChar)) {
+                if ((this.currentState == JsonState.VALUE_CONTENT && this.currentValue.length() == 0) || // special case when we have a space character before adding any content to the value
+                    (this.currentState != JsonState.KEY_CONTENT && this.currentState != JsonState.VALUE_CONTENT)) {
+                        continue;
+                    }
             }
 
             switch (this.currentState) {
@@ -54,6 +64,7 @@ public class JsonParser {
                     i += this.setState(this.nextState, jsonString, i, currentChar);
                     break;
             }
+
         }
 
         if (this.currentState != JsonState.END_BODY) {
@@ -98,23 +109,19 @@ public class JsonParser {
                 break;
             case VALUE_CONTENT:
                 this.validTokens = null;
-                this.terminatingTokens = ",{}n";
+                this.terminatingTokens = ",{}n[";
                 this.nextState = JsonState.VALUE_KEY_SEPARATOR;
                 break;
             case VALUE_KEY_SEPARATOR: {
+                /* TODO: this needs some rework because it's too confusing */
                 indexOffset = this.insertValue(jsonString, jsonStringIndex, currentChar);
-                currentChar = jsonString.charAt(jsonStringIndex + indexOffset);
-                while (this.isWhitespace(currentChar)) {
+                currentChar = jsonString.charAt(indexOffset);
+                while (this.isWhitespace(currentChar) && indexOffset < jsonString.length()) {
+                    currentChar = jsonString.charAt(indexOffset);
                     indexOffset += 1;
-                    currentChar = jsonString.charAt(jsonStringIndex + indexOffset);
                 }
                 this.validTokens = ",}";
                 this.terminatingTokens = null;
-                if (currentChar == ',') {
-                    this.nextState = JsonState.START_KEY_QUOTE;
-                } else if (currentChar == '}') {
-                    this.nextState = JsonState.END_BODY;
-                }
                 break;
             }
         }
@@ -176,12 +183,53 @@ public class JsonParser {
     private int parseObjectValue(String key, String jsonString, int jsonStringIndex) throws Exception {
         String innerJson = this.extractJson(jsonString, jsonStringIndex);
         if (innerJson == null) {
-            throw new Exception("Invalid JSON value for key '" + key + "'.");
+            throw new Exception("Invalid object value for key '" + key + "'.");
         }
         JsonParser parser = new JsonParser();
         JsonResult result = parser.parse(innerJson);
         this.parseResult.add(key, result);
         return innerJson.length();
+    }
+
+    private JsonArray createArrayFromString(String arrayString) throws Exception {
+        JsonArray jsonArray = new JsonArray();
+        
+        List<String> arrayItems = this.splitArrayString(arrayString);
+        for (String arrayItem : arrayItems) {
+            switch (this.getValueType(arrayItem.charAt(0), arrayItem)) {
+                case STRING:
+                    String content = arrayItem.substring(1, arrayItem.length() - 1);
+                    jsonArray.add(content);
+                    break;
+                case INTEGER:
+                    jsonArray.add(Integer.parseInt(arrayItem));
+                    break;
+                case DOUBLE:
+                    jsonArray.add(Double.parseDouble(arrayItem));
+                    break;
+                case NULL:
+                    jsonArray.add(null);
+                    break;
+                case OBJECT:
+                    JsonParser parser = new JsonParser();
+                    JsonResult result = parser.parse(arrayItem);
+                    jsonArray.add(result);
+                    break;
+                case ARRAY:
+                    JsonArray array = this.createArrayFromString(arrayItem);
+                    jsonArray.add(array);
+                    break;
+            }
+        }
+
+        return jsonArray;
+    }
+
+    private int parseArrayValue(String key, String jsonString, int jsonStringIndex) throws Exception {
+        String arrayString = this.extractArray(jsonString, jsonStringIndex);
+        JsonArray jsonArray = this.createArrayFromString(arrayString);
+        this.parseResult.add(key, jsonArray);
+        return arrayString.length() + 2; // the +2 represents the two brackets stripped from the end "[...]"
     }
 
     private void parseDoubleValue(String key, String value) {
@@ -205,6 +253,7 @@ public class JsonParser {
 
         String valueString = this.currentValue.toString().trim();
 
+        int offset;
         switch (this.getValueType(currentChar, valueString)) {
             case STRING:
                 this.parseStringValue(keyString, valueString);
@@ -217,13 +266,14 @@ public class JsonParser {
                 return 4; /* length of "null" */
             
             case OBJECT:
-                int offset = this.parseObjectValue(keyString, jsonString, jsonStringIndex);
+                offset = this.parseObjectValue(keyString, jsonString, jsonStringIndex);
                 this.resetKeyValue();
                 return offset;
 
             case ARRAY:
-                /* TODO: */
-                return 0;
+                offset = this.parseArrayValue(keyString, jsonString, jsonStringIndex);
+                this.resetKeyValue();
+                return offset;
             
             case DOUBLE:
                 this.parseDoubleValue(keyString, valueString);
@@ -242,22 +292,82 @@ public class JsonParser {
         return 0;
     }
 
-    private String extractJson(String jsonString, int jsonStringIndex) {
+    private String extractStringBetween(String jsonString, int jsonStringIndex, char startChar, char endChar, boolean inclusive) {
         int bracketCounter = 1;
         int startIndex = jsonStringIndex;
         for (int i = jsonStringIndex + 1; i < jsonString.length(); i++) {
-            if (jsonString.charAt(i) == '{') {
+            if (jsonString.charAt(i) == startChar) {
                 bracketCounter += 1;
-            } else if (jsonString.charAt(i) == '}') {
+            } else if (jsonString.charAt(i) == endChar) {
                 bracketCounter -= 1;
             }
 
             if (bracketCounter == 0) {
-                return jsonString.substring(startIndex, i + 1);
+                if (inclusive) {
+                    return jsonString.substring(startIndex, i + 1);
+                }
+
+                return jsonString.substring(startIndex + 1, i);
             }
         }
 
         return null;
+    }
+
+    private String extractJson(String jsonString, int jsonStringIndex) {
+        return this.extractStringBetween(jsonString, jsonStringIndex, '{', '}', true);
+    }
+
+    private String extractArray(String jsonString, int jsonStringIndex) {
+        return this.extractStringBetween(jsonString, jsonStringIndex, '[', ']', true);
+    }
+
+    private List<String> splitArrayString(String arrayString) {
+        boolean insideQuotes = false;
+        List<String> splitItems = new ArrayList<String>();
+        StringBuilder currentItem = new StringBuilder();
+
+        // start at 1 to avoid the opening bracket '[', otherwise we parse an array infinitely until stack overflow
+        for (int i = 1; i < arrayString.length() - 1; i++) {
+            char currentChar = arrayString.charAt(i);
+
+            if (currentChar == '"') {
+                insideQuotes = !insideQuotes;
+            }
+
+            if (!insideQuotes && currentChar == ' ') {
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == '{') {
+                String body = this.extractStringBetween(arrayString, i, '{', '}', true);
+                splitItems.add(body);
+                i += body.length() - 1;
+                currentItem = new StringBuilder();
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == '[') {
+                String body = this.extractStringBetween(arrayString, i, '[', ']', true);
+                splitItems.add(body);
+                i += body.length() - 1;
+                currentItem = new StringBuilder();
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == ',' && currentItem.length() > 0) {
+                splitItems.add(currentItem.toString());
+                currentItem = new StringBuilder();
+            } else {
+                currentItem.append(currentChar);
+            }
+        }
+
+        if (currentItem.length() > 0) {
+            splitItems.add(currentItem.toString());
+        }
+
+        return splitItems;
     }
 
     private void resetKeyValue() {
