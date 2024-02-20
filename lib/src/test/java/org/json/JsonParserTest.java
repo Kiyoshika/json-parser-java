@@ -76,4 +76,14 @@ public class JsonParserTest {
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": NULL }"));
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": n"));
     }
+
+    @Test public void unDelimitedKey() throws Exception {
+        JsonParser parser = new JsonParser();
+        assertThrows(Exception.class, () -> parser.parse("{ \"key: 1 }"));
+    }
+
+    @Test public void unDelimitedValue() throws Exception {
+        JsonParser parser = new JsonParser();
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": \"value }"));
+    }
 }
