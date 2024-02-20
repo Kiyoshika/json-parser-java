@@ -9,10 +9,9 @@ The `master` branch is the active development branch and my be unstable compared
 If you're looking for a more "stable" version, check the [releases](https://github.com/Kiyoshika/json-parser-java/releases).
 
 ## Current Features
-* Can parse `String`, `int`, `double`, `Object` (nested JSON) and `null` values
+* Can parse `String`, `int`, `double`, `Object` (nested JSON), `null` and `Array` values.
 
 ## Upcoming Features
-* Support for `Array`
 * Reflection to parse a JSON directly into a user-defined class
 * Modifying JSON after parsing
 * Writing JSON back to string
@@ -43,6 +42,7 @@ double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
 boolean key4 = result.isNull("key4"); // true
 
+// handling arrays
 JsonArray key5 = result.getArray("key5");
 int arrayValue1 = key5.getInt(0); // 1
 double arrayValue2 = key5.getDouble(1); // 2.2

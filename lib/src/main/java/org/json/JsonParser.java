@@ -66,13 +66,21 @@ public class JsonParser {
                     }
                     break;
 
-                    case '{': {
-                        // when encounting a '{' while parsing the value content, we consume the string until the appropriate
-                        // '}' is found and parse the body. Then we move the index over to the end and check if the next character
-                        // is ',' or '}' to determine if we should parse a new key or close the body
+                    /*
+                     * These characters handle a special case where we need to parse a substring as
+                     * a value, such as a nested JSON body, JSON array or specific string (e.g., "null").
+                     * We shift the index by how long the string is (and bind it to the max valid length)
+                     * after inserting the value into the parseResult and determine the next state based on
+                     * if the following character is a comma (which indicates we need to parse another key)
+                     * or a close bracket which indicates this is the last value in the JSON.
+                     */
+                    case '{':
+                    case '[':
+                    case 'n': {
                         if (this.currentState == JsonState.VALUE_CONTENT) {
                             this.nextState = JsonState.VALUE_KEY_SEPARATOR;
                             i += this.insertValue(jsonString, i, currentChar);
+                            if (i > jsonString.length()) { i = jsonString.length() - 1; }
                             currentChar = jsonString.charAt(i);
                             while (this.isWhitespace(currentChar) && i < jsonString.length()) {
                                 i += 1;
@@ -86,8 +94,6 @@ public class JsonParser {
                         }
                     }
                     break;
-
-                    /* TODO: add other terminators like 'n', '[', etc. */
                 }
 
                 this.setState(this.nextState, jsonString, i, currentChar);
