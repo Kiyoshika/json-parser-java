@@ -122,6 +122,76 @@ public class JsonParser {
         return indexOffset;
     }
 
+    private JsonType getValueType(char currentChar, String value) {
+
+        switch (currentChar) {
+            case 'n':
+                return JsonType.NULL;
+            case '{':
+                return JsonType.OBJECT;
+            case '[':
+                return JsonType.ARRAY;
+        }
+
+        if (value.length() == 0) {
+            return JsonType.INVALID;
+        }
+
+        if (value.charAt(0) == '"') {
+            return JsonType.STRING;
+        }
+
+        if (value.indexOf('.') != -1) {
+            return JsonType.DOUBLE;
+        }
+
+        // assumes every other set of characters forms an integer, even if it's not true.
+        // parseInt() would throw an exception if remaining characters does not match an int.
+        return JsonType.INTEGER;
+    }
+
+    private void parseStringValue(String key, String value) throws Exception {
+        if (value.length() == 0) {
+            this.parseResult.add(key, "");
+            return;
+        }
+        
+        if (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+            this.parseResult.add(key, value.substring(1, value.length() - 1));
+            return;
+        }
+
+        throw new Exception("Couldn't parse string value.");
+    }
+
+    private void parseNullValue(String key, String jsonString, int jsonStringIndex) throws Exception {
+        if ((jsonString.length() - jsonStringIndex < 4) ||
+            !jsonString.substring(jsonStringIndex, jsonStringIndex + 4).equals("null")) {
+                throw new Exception("Couldn't parse null value.");
+            }
+
+            this.parseResult.addNull(key);
+    }
+
+    private int parseObjectValue(String key, String jsonString, int jsonStringIndex) throws Exception {
+        String innerJson = this.extractJson(jsonString, jsonStringIndex);
+        if (innerJson == null) {
+            throw new Exception("Invalid JSON value for key '" + key + "'.");
+        }
+        JsonParser parser = new JsonParser();
+        JsonResult result = parser.parse(innerJson);
+        this.parseResult.add(key, result);
+        return innerJson.length();
+    }
+
+    private void parseDoubleValue(String key, String value) {
+        this.parseResult.add(key, Double.parseDouble(value));
+    }
+
+    private void parseIntValue(String key, String value) {
+        this.parseResult.add(key, Integer.parseInt(value));
+    }
+
     private int insertValue(String jsonString, int jsonStringIndex, char currentChar) throws Exception {
         String keyString = this.currentKey.toString();
 
@@ -134,49 +204,41 @@ public class JsonParser {
         }
 
         String valueString = this.currentValue.toString().trim();
-        boolean startsWithQuote = valueString.length() > 0 && valueString.charAt(0) == '"';
 
-        // strip quotes off unless it's empty
-        if (startsWithQuote && valueString.length() > 2) {
-            valueString = valueString.substring(1, valueString.length() - 1);
-            this.parseResult.add(keyString, valueString);
-        } else if (startsWithQuote) {
-            this.parseResult.add(keyString, "");
+        switch (this.getValueType(currentChar, valueString)) {
+            case STRING:
+                this.parseStringValue(keyString, valueString);
+                this.resetKeyValue();
+                return 0;
 
-        // null values
-        } else if (currentChar == 'n') {
-            if ((jsonString.length() - jsonStringIndex < 4) ||
-                !jsonString.substring(jsonStringIndex, jsonStringIndex + 4).equals("null")) {
-                throw new Exception("Couldn't parse null value.");
-            }
+            case NULL:
+                this.parseNullValue(keyString, jsonString, jsonStringIndex);
+                this.resetKeyValue();
+                return 4; /* length of "null" */
+            
+            case OBJECT:
+                int offset = this.parseObjectValue(keyString, jsonString, jsonStringIndex);
+                this.resetKeyValue();
+                return offset;
 
-            this.parseResult.addNull(keyString);
-            return 4; /* length of "null" */
+            case ARRAY:
+                /* TODO: */
+                return 0;
+            
+            case DOUBLE:
+                this.parseDoubleValue(keyString, valueString);
+                this.resetKeyValue();
+                return 0;
 
-        // object values
-        } else if (currentChar == '{') {
-            String innerJson = this.extractJson(jsonString, jsonStringIndex);
-            if (innerJson == null) {
-                throw new Exception("Invalid JSON value for key '" + keyString + "'.");
-            }
-            JsonParser parser = new JsonParser();
-            JsonResult result = parser.parse(innerJson);
-            this.parseResult.add(keyString, result);
-            this.resetKeyValue();
-            return innerJson.length();
-
-        // TODO: array values (starts with '[')
-        // double values
-        } else if (valueString.indexOf('.') != -1) {
-            this.parseResult.add(keyString, Double.parseDouble(valueString));
+            case INTEGER:
+                this.parseIntValue(keyString, valueString);
+                this.resetKeyValue();
+                return 0;
+            
+            case INVALID:
+                throw new Exception("Invalid value type found.");
         }
 
-        // integer values
-        else {
-            this.parseResult.add(keyString, Integer.parseInt(valueString));
-        }
-
-        this.resetKeyValue();
         return 0;
     }
 
