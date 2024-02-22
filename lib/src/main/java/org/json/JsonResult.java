@@ -46,4 +46,15 @@ public class JsonResult {
     public JsonArray getArray(String key) {
         return (JsonArray)this.get(key);
     }
+
+    public void setValue(String key, Object value) {
+        if (this.isNull(key)) {
+            this.nullValues.remove(key);
+        }
+        this.items.put(key, value);
+    }
+
+    public void setNull(String key) {
+        this.nullValues.add(key);
+    }
 }
