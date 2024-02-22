@@ -6,6 +6,8 @@ import java.util.List;
 public class JsonArray {
     private List<Object> arrayItems = new ArrayList<Object>();
 
+    public JsonArray() {}
+
     public void add(Object item) {
         this.arrayItems.add(item);
     }

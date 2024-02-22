@@ -107,4 +107,39 @@ public class JsonParserTest {
         JsonParser parser = new JsonParser();
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": \"value }"));
     }
+
+    @Test public void addValues() throws Exception {
+        JsonParser parser = new JsonParser();
+        JsonResult result = parser.parse("{ \"key\": \"value\" }");
+        // overwrite value
+        result.setValue("key", 13);
+        assertEquals(result.getInt("key"), 13);
+        assertFalse(result.isNull("key"));
+
+        // nullify a value
+        result.setNull("key");
+        assertTrue(result.isNull("key"));
+
+        // other value types (now using unique keys)
+        result.setValue("key2", "string value");
+        assertEquals(result.getString("key2"), "string value");
+
+        result.setValue("key3", 3.14159);
+        assertEquals(result.getDouble("key3"), 3.14159, 0.00);
+
+        JsonResult subObj = new JsonResult();
+        subObj.setValue("innerkey", "innervalue");
+        result.setValue("key4", subObj);
+        assertEquals(result.getObject("key4").getString("innerkey"), "innervalue");
+
+        JsonArray array = new JsonArray();
+        array.add(1);
+        array.add(2.2);
+        array.add("3");
+        result.setValue("key5", array);
+        JsonArray getArray = result.getArray("key5");
+        assertEquals(getArray.getInt(0), 1);
+        assertEquals(getArray.getDouble(1), 2.2, 0.00);
+        assertEquals(getArray.getString(2), "3");
+    }
 }
