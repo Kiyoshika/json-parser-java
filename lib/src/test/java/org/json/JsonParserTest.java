@@ -31,6 +31,25 @@ public class JsonParserTest {
     @Test public void duplicatekeys() throws Exception {
         JsonParser parser = new JsonParser();
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": 1, \"key\": 2 }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": 1, \"key\": null }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": null, \"key\": 1 }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": null, \"key\": null }"));
+
+        final JsonResult result = new JsonResult();
+        result.setNull("key");
+        assertThrows(Exception.class, () -> result.setNull("key"));
+
+        final JsonResult result2 = new JsonResult();
+        result2.setValue("key", 1);
+        assertThrows(Exception.class, () -> result2.setValue("key", 2));
+
+        final JsonResult result3 = new JsonResult();
+        result3.setNull("key");
+        assertThrows(Exception.class, () -> result3.setValue("key", 1));
+
+        final JsonResult result4 = new JsonResult();
+        result4.setValue("key", 1);
+        assertThrows(Exception.class, () -> result4.setNull("key"));
     }
 
     @Test public void emptyKey() throws Exception {
