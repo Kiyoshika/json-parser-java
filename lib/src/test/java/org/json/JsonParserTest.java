@@ -142,4 +142,12 @@ public class JsonParserTest {
         assertEquals(getArray.getDouble(1), 2.2, 0.00);
         assertEquals(getArray.getString(2), "3");
     }
+
+    @Test public void emptyJson() throws Exception {
+        JsonParser parser = new JsonParser();
+        // verifying no exceptions happen
+        parser.parse("{}");
+        parser.parse("{ }");
+        parser.parse("{  }");
+    }
 }

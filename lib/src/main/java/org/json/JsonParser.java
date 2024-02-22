@@ -129,10 +129,24 @@ public class JsonParser {
     private void setState(JsonState newState, String jsonString, int jsonStringIndex, char currentChar) throws Exception {
         this.currentState = newState;
         switch (newState) {
-            case START_BODY:
+            case START_BODY: {
                 this.validTokens = "{";
                 this.terminatingTokens = null;
-                this.nextState = JsonState.START_KEY_QUOTE;
+                // check for a special case of empty JSON. this is handled here, otherwise
+                // trailing delimiters in START_KEY_QUOTE aren't flagged, 
+                // e.g., { "key": "trailing", } is valid (when it shouldn't be)
+                jsonStringIndex += 1;
+                currentChar = jsonString.charAt(jsonStringIndex);
+                while (this.isWhitespace(currentChar) && jsonStringIndex < jsonString.length()) {
+                    currentChar = jsonString.charAt(jsonStringIndex);
+                    jsonStringIndex += 1;
+                }
+                if (currentChar == '}') {
+                    this.nextState = JsonState.END_BODY;
+                } else {
+                    this.nextState = JsonState.START_KEY_QUOTE;
+                }
+            }
                 break;
             case START_KEY_QUOTE:
                 this.validTokens = "\"";
@@ -158,6 +172,11 @@ public class JsonParser {
                 this.validTokens = null;
                 this.terminatingTokens = ",{}n[";
                 this.nextState = JsonState.VALUE_KEY_SEPARATOR;
+                break;
+            case END_BODY:
+                this.validTokens = "}";
+                this.terminatingTokens = null;
+                this.nextState = JsonState.END_BODY;
                 break;
         }
     }
