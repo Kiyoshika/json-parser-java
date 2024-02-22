@@ -18,6 +18,8 @@ If you're looking for a more "stable" version, check the [releases](https://gith
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
+* Duplicate keys are not checked across null and non-null values
+    * i.e., you can use a duplicate key if it has both a null and non-null value
 
 ## Basic Usage
 You can also take a look at the tests, but here's some basic usage of the library:
