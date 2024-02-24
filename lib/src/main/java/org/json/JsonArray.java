@@ -40,4 +40,87 @@ public class JsonArray {
         return this.get(i) == null;
     }
 
+    public static JsonArray fromString(String arrayString) throws Exception {
+        JsonArray jsonArray = new JsonArray();
+        
+        List<String> arrayItems = JsonArray.splitArrayString(arrayString);
+        for (String arrayItem : arrayItems) {
+            switch (JsonUtil.getValueType(arrayItem.charAt(0), arrayItem)) {
+                case STRING:
+                    String content = arrayItem.substring(1, arrayItem.length() - 1);
+                    jsonArray.add(content);
+                    break;
+                case INTEGER:
+                    jsonArray.add(Integer.parseInt(arrayItem));
+                    break;
+                case DOUBLE:
+                    jsonArray.add(Double.parseDouble(arrayItem));
+                    break;
+                case NULL:
+                    jsonArray.add(null);
+                    break;
+                case OBJECT:
+                    JsonParser parser = new JsonParser();
+                    JsonResult result = parser.parse(arrayItem);
+                    jsonArray.add(result);
+                    break;
+                case ARRAY:
+                    JsonArray array = JsonArray.fromString(arrayItem);
+                    jsonArray.add(array);
+                    break;
+                case INVALID:
+                    break;
+            }
+        }
+
+        return jsonArray;
+    }
+
+    private static List<String> splitArrayString(String arrayString) {
+        boolean insideQuotes = false;
+        List<String> splitItems = new ArrayList<String>();
+        StringBuilder currentItem = new StringBuilder();
+
+        // start at 1 to avoid the opening bracket '[', otherwise we parse an array infinitely until stack overflow
+        for (int i = 1; i < arrayString.length() - 1; i++) {
+            char currentChar = arrayString.charAt(i);
+
+            if (currentChar == '"') {
+                insideQuotes = !insideQuotes;
+            }
+
+            if (!insideQuotes && currentChar == ' ') {
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == '{') {
+                String body = JsonUtil.extractStringBetween(arrayString, i, '{', '}', true);
+                splitItems.add(body);
+                i += body.length() - 1;
+                currentItem = new StringBuilder();
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == '[') {
+                String body = JsonUtil.extractStringBetween(arrayString, i, '[', ']', true);
+                splitItems.add(body);
+                i += body.length() - 1;
+                currentItem = new StringBuilder();
+                continue;
+            }
+
+            if (!insideQuotes && currentChar == ',' && currentItem.length() > 0) {
+                splitItems.add(currentItem.toString());
+                currentItem = new StringBuilder();
+            } else {
+                currentItem.append(currentChar);
+            }
+        }
+
+        if (currentItem.length() > 0) {
+            splitItems.add(currentItem.toString());
+        }
+
+        return splitItems;
+    }
 }
