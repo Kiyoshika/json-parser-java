@@ -35,21 +35,32 @@ public class JsonParserTest {
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": null, \"key\": 1 }"));
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": null, \"key\": null }"));
 
-        final JsonResult result = new JsonResult();
+        JsonResult result = new JsonResult();
+        // transition from null to value
         result.setNull("key");
-        assertThrows(Exception.class, () -> result.setNull("key"));
+        result.setValue("key", "hello");
+        assertFalse(result.isNull("key"));
+        assertEquals(result.getString("key"), "hello");
 
-        final JsonResult result2 = new JsonResult();
-        result2.setValue("key", 1);
-        assertThrows(Exception.class, () -> result2.setValue("key", 2));
+        // transition from value to null
+        JsonResult result2 = new JsonResult();
+        result2.setValue("key", "hello");
+        result2.setNull("key");
+        assertTrue(result2.isNull("key"));
+        assertEquals(result2.getString("key"), null);
 
-        final JsonResult result3 = new JsonResult();
+        // overwrite null with null
+        JsonResult result3 = new JsonResult();
         result3.setNull("key");
-        assertThrows(Exception.class, () -> result3.setValue("key", 1));
+        result3.setNull("key");
+        assertTrue(result3.isNull("key"));
 
-        final JsonResult result4 = new JsonResult();
-        result4.setValue("key", 1);
-        assertThrows(Exception.class, () -> result4.setNull("key"));
+        // overwrite value with value
+        JsonResult result4 = new JsonResult();
+        result4.setValue("key", "hello");
+        result4.setValue("key", 13);
+        assertFalse(result4.isNull("key"));
+        assertEquals(result4.getInt("key"), 13);
     }
 
     @Test public void emptyKey() throws Exception {
