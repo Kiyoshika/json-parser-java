@@ -180,4 +180,11 @@ public class JsonParserTest {
         parser.parse("{ }");
         parser.parse("{  }");
     }
+
+    @Test public void parseArrayDirectly() throws Exception {
+        JsonArray array = JsonArray.fromString("[{\"key\": 1}, {\"key\": 2}, {\"key\": 3}]");
+        assertEquals(array.getObject(0).getInt("key"), 1);
+        assertEquals(array.getObject(1).getInt("key"), 2);
+        assertEquals(array.getObject(2).getInt("key"), 3);
+    }
 }

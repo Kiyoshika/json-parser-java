@@ -185,34 +185,6 @@ public class JsonParser {
         }
     }
 
-    private JsonType getValueType(char currentChar, String value) {
-
-        switch (currentChar) {
-            case 'n':
-                return JsonType.NULL;
-            case '{':
-                return JsonType.OBJECT;
-            case '[':
-                return JsonType.ARRAY;
-        }
-
-        if (value.length() == 0) {
-            return JsonType.INVALID;
-        }
-
-        if (value.charAt(0) == '"') {
-            return JsonType.STRING;
-        }
-
-        if (value.indexOf('.') != -1) {
-            return JsonType.DOUBLE;
-        }
-
-        // assumes every other set of characters forms an integer, even if it's not true.
-        // parseInt() would throw an exception if remaining characters does not match an int.
-        return JsonType.INTEGER;
-    }
-
     private void parseStringValue(String key, String value) throws Exception {
         if (value.length() == 0) {
             this.parseResult.add(key, "");
@@ -237,7 +209,7 @@ public class JsonParser {
     }
 
     private int parseObjectValue(String key, String jsonString, int jsonStringIndex) throws Exception {
-        String innerJson = this.extractJson(jsonString, jsonStringIndex);
+        String innerJson = JsonUtil.extractJson(jsonString, jsonStringIndex);
         if (innerJson == null) {
             throw new Exception("Invalid object value for key '" + key + "'.");
         }
@@ -247,43 +219,9 @@ public class JsonParser {
         return innerJson.length();
     }
 
-    private JsonArray createArrayFromString(String arrayString) throws Exception {
-        JsonArray jsonArray = new JsonArray();
-        
-        List<String> arrayItems = this.splitArrayString(arrayString);
-        for (String arrayItem : arrayItems) {
-            switch (this.getValueType(arrayItem.charAt(0), arrayItem)) {
-                case STRING:
-                    String content = arrayItem.substring(1, arrayItem.length() - 1);
-                    jsonArray.add(content);
-                    break;
-                case INTEGER:
-                    jsonArray.add(Integer.parseInt(arrayItem));
-                    break;
-                case DOUBLE:
-                    jsonArray.add(Double.parseDouble(arrayItem));
-                    break;
-                case NULL:
-                    jsonArray.add(null);
-                    break;
-                case OBJECT:
-                    JsonParser parser = new JsonParser();
-                    JsonResult result = parser.parse(arrayItem);
-                    jsonArray.add(result);
-                    break;
-                case ARRAY:
-                    JsonArray array = this.createArrayFromString(arrayItem);
-                    jsonArray.add(array);
-                    break;
-            }
-        }
-
-        return jsonArray;
-    }
-
     private int parseArrayValue(String key, String jsonString, int jsonStringIndex) throws Exception {
-        String arrayString = this.extractArray(jsonString, jsonStringIndex);
-        JsonArray jsonArray = this.createArrayFromString(arrayString);
+        String arrayString = JsonUtil.extractArray(jsonString, jsonStringIndex);
+        JsonArray jsonArray = JsonArray.fromString(arrayString);
         this.parseResult.add(key, jsonArray);
         return arrayString.length();
     }
@@ -310,7 +248,7 @@ public class JsonParser {
         String valueString = this.currentValue.toString().trim();
 
         int offset;
-        switch (this.getValueType(currentChar, valueString)) {
+        switch (JsonUtil.getValueType(currentChar, valueString)) {
             case STRING:
                 this.parseStringValue(keyString, valueString);
                 this.resetKeyValue();
@@ -346,84 +284,6 @@ public class JsonParser {
         }
 
         return 0;
-    }
-
-    private String extractStringBetween(String jsonString, int jsonStringIndex, char startChar, char endChar, boolean inclusive) {
-        int bracketCounter = 1;
-        int startIndex = jsonStringIndex;
-        for (int i = jsonStringIndex + 1; i < jsonString.length(); i++) {
-            if (jsonString.charAt(i) == startChar) {
-                bracketCounter += 1;
-            } else if (jsonString.charAt(i) == endChar) {
-                bracketCounter -= 1;
-            }
-
-            if (bracketCounter == 0) {
-                if (inclusive) {
-                    return jsonString.substring(startIndex, i + 1);
-                }
-
-                return jsonString.substring(startIndex + 1, i);
-            }
-        }
-
-        return null;
-    }
-
-    private String extractJson(String jsonString, int jsonStringIndex) {
-        return this.extractStringBetween(jsonString, jsonStringIndex, '{', '}', true);
-    }
-
-    private String extractArray(String jsonString, int jsonStringIndex) {
-        return this.extractStringBetween(jsonString, jsonStringIndex, '[', ']', true);
-    }
-
-    private List<String> splitArrayString(String arrayString) {
-        boolean insideQuotes = false;
-        List<String> splitItems = new ArrayList<String>();
-        StringBuilder currentItem = new StringBuilder();
-
-        // start at 1 to avoid the opening bracket '[', otherwise we parse an array infinitely until stack overflow
-        for (int i = 1; i < arrayString.length() - 1; i++) {
-            char currentChar = arrayString.charAt(i);
-
-            if (currentChar == '"') {
-                insideQuotes = !insideQuotes;
-            }
-
-            if (!insideQuotes && currentChar == ' ') {
-                continue;
-            }
-
-            if (!insideQuotes && currentChar == '{') {
-                String body = this.extractStringBetween(arrayString, i, '{', '}', true);
-                splitItems.add(body);
-                i += body.length() - 1;
-                currentItem = new StringBuilder();
-                continue;
-            }
-
-            if (!insideQuotes && currentChar == '[') {
-                String body = this.extractStringBetween(arrayString, i, '[', ']', true);
-                splitItems.add(body);
-                i += body.length() - 1;
-                currentItem = new StringBuilder();
-                continue;
-            }
-
-            if (!insideQuotes && currentChar == ',' && currentItem.length() > 0) {
-                splitItems.add(currentItem.toString());
-                currentItem = new StringBuilder();
-            } else {
-                currentItem.append(currentChar);
-            }
-        }
-
-        if (currentItem.length() > 0) {
-            splitItems.add(currentItem.toString());
-        }
-
-        return splitItems;
     }
 
     private void resetKeyValue() {
