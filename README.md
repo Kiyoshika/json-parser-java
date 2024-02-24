@@ -10,11 +10,11 @@ If you're looking for a more "stable" version, check the [releases](https://gith
 
 ## Current Features
 * Can parse `String`, `int`, `double`, `Object` (nested JSON), `null` and `Array` values.
-* Modifying/creating JSON (`JsonResult`) using `setValue()` or `setNull()`
+* Modifying/creating JSON (`JsonResult`) objects/arrays
+* Writing JSON objects/arrays to string
 
 ## Upcoming Features
 * Reflection to parse a JSON directly into a user-defined class
-* Writing JSON back to string
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
