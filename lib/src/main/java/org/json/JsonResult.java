@@ -55,6 +55,9 @@ public class JsonResult {
     }
 
     public void setNull(String key) {
+        if (this.get(key) != null) {
+            this.items.remove(key);
+        }
         this.nullValues.add(key);
     }
 }
