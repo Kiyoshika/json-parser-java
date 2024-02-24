@@ -45,6 +45,7 @@ public class JsonArray {
     }
 
     public static JsonArray fromString(String arrayString) throws Exception {
+        arrayString = arrayString.trim();
         JsonArray jsonArray = new JsonArray();
         
         List<String> arrayItems = JsonArray.splitArrayString(arrayString);
