@@ -78,19 +78,19 @@ public class JsonParserTest {
         assertThrows(Exception.class, () -> parser.parse("{ \"key\" 1 }"));
     }
 
-    @Test public void missingStartBracket() throws Exception {
+    @Test public void missingStartBody() throws Exception {
         JsonParser parser = new JsonParser();
+        assertThrows(Exception.class, () -> parser.parse("\"key\": 1 }"));
         assertThrows(Exception.class, () -> parser.parse(" \"key\": 1 }"));
     }
 
-    @Test public void missingEndBracket() throws Exception {
+    @Test public void missingEndBody() throws Exception {
         JsonParser parser = new JsonParser();
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": 1"));
-    }
-
-    @Test public void missingEndBracket2() throws Exception {
-        JsonParser parser = new JsonParser();
         assertThrows(Exception.class, () -> parser.parse("{ \"key\": {\"key2\": 1 }"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": {\"key2\": 1 } "));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": [1,2,3]"));
+        assertThrows(Exception.class, () -> parser.parse("{ \"key\": [1,2,3] "));
     }
 
     @Test public void extraDelimiter() throws Exception {
