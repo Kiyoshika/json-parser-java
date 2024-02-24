@@ -18,11 +18,11 @@ If you're looking for a more "stable" version, check the [releases](https://gith
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
-* Duplicate keys are not checked across null and non-null values
-    * i.e., you can use a duplicate key if it has both a null and non-null value
 
 ## Basic Usage
 You can also take a look at the tests, but here's some basic usage of the library:
+
+### Parsing Single Objects
 
 ```java
 JsonParser parser = new JsonParser();
@@ -56,7 +56,23 @@ Keys and values must use DOUBLE quotes and NOT single quotes!
 
 DO NOT use `get()` methods to check if a value is null since this will return null if the key is not present in JSON. Use the `isNull()` method instead.
 
-Currently, a `JsonResult` object is returned which has basic getters with type conversions but will hopefully feature reflection to parse directly into a user-defined class. `JsonResult` also has a generic `get()` method which returns an `Object` type so you would have to do the conversion yourself. This method is not recommended unless you are doing something out of the ordinary.
+### Parsing Arrays
+If given an array of JsonObjects (or primitives), you can parse the arrays directly.
+
+```java
+String arrayString = """
+[
+    {\"key\": 1},
+    {\"key\": 2},
+    {\"key\": 3}
+]
+""";
+
+JsonArray array = JsonArray.fromString(arrayString);
+array.getObject(0).getInt("key"); // 1
+array.getObject(1).getInt("key"); // 2
+array.getObject(2).getInt("key"); // 3
+```
 
 ## Building
 * Run `./gradlew build` from the root directory
