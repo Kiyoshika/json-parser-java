@@ -8,6 +8,10 @@ public class JsonArray {
 
     public JsonArray() {}
 
+    public int length() {
+        return this.arrayItems.size();
+    }
+
     public void add(Object item) {
         this.arrayItems.add(item);
     }
