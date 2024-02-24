@@ -80,12 +80,16 @@ public class JsonParser {
                         if (this.currentState == JsonState.VALUE_CONTENT) {
                             this.nextState = JsonState.VALUE_KEY_SEPARATOR;
                             i += this.insertValue(jsonString, i, currentChar);
-                            if (i > jsonString.length()) { i = jsonString.length() - 1; }
+                            if (i >= jsonString.length()) {
+                                throw new Exception("Incomplete JSON.");
+                            }
+
                             currentChar = jsonString.charAt(i);
                             while (this.isWhitespace(currentChar) && i < jsonString.length()) {
                                 i += 1;
                                 currentChar = jsonString.charAt(i);
                             }
+
                             if (currentChar == ',') {
                                 this.nextState = JsonState.START_KEY_QUOTE;
                             } else if (currentChar == '}') {
@@ -281,7 +285,7 @@ public class JsonParser {
         String arrayString = this.extractArray(jsonString, jsonStringIndex);
         JsonArray jsonArray = this.createArrayFromString(arrayString);
         this.parseResult.add(key, jsonArray);
-        return arrayString.length() + 2; // the +2 represents the two brackets stripped from the end "[...]"
+        return arrayString.length();
     }
 
     private void parseDoubleValue(String key, String value) {
