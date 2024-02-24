@@ -16,6 +16,10 @@ public class JsonArray {
         this.arrayItems.add(item);
     }
 
+    public void remove(int i) {
+        this.arrayItems.remove(i);
+    }
+
     public Object get(int i) {
         return this.arrayItems.get(i);
     }
