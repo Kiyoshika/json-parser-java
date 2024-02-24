@@ -39,6 +39,7 @@ String jsonString = """
     """;
 JsonResult result = parser.parse(jsonString);
 
+// retrieve values
 int innerKey = result.getObject("key").getInt("innerkey"); // 10
 double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
@@ -50,6 +51,14 @@ int arrayValue1 = key5.getInt(0); // 1
 double arrayValue2 = key5.getDouble(1); // 2.2
 JsonArray arrayValue3 = key5.getArray(2); // [1, 2, 3]
 JsonResult arrayValue4 = key5.getObject(3); // { "inner key": "inner value" }
+
+// overwrite values
+// overwrites key2 from 1.23 -> "hello"
+result.setValue("key2", new JsonItem("hello", JsonType.STRING));
+
+// add new values
+result.addString("newkey", "new value");
+result.addInt("intkey", 12);
 ```
 
 Keys and values must use DOUBLE quotes and NOT single quotes!
@@ -72,7 +81,17 @@ JsonArray array = JsonArray.fromString(arrayString);
 array.getObject(0).getInt("key"); // 1
 array.getObject(1).getInt("key"); // 2
 array.getObject(2).getInt("key"); // 3
+
+// overwrite value (changes 2 -> 42)
+array.getObject(1).setValue("key", new JsonItem(42, JsonType.INTEGER));
+
+// add value
+array.addString("hello"); // [ 1, 42, 3, "hello" ]
+array.addNull(); // [ 1, 42, 3, "hello", null ]
 ```
+
+### Writing to String
+Both objects (`JsonResult`) and arrays (`JsonArray`) have a `toString()` method to convert either representation to a string.
 
 ## Building
 * Run `./gradlew build` from the root directory
