@@ -187,12 +187,12 @@ public class JsonParser {
 
     private void parseStringValue(String key, String value) throws Exception {
         if (value.length() == 0) {
-            this.parseResult.add(key, "");
+            this.parseResult.addString(key, "");
             return;
         }
         
         if (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
-            this.parseResult.add(key, value.substring(1, value.length() - 1));
+            this.parseResult.addString(key, value.substring(1, value.length() - 1));
             return;
         }
 
@@ -215,23 +215,23 @@ public class JsonParser {
         }
         JsonParser parser = new JsonParser();
         JsonResult result = parser.parse(innerJson);
-        this.parseResult.add(key, result);
+        this.parseResult.addObject(key, result);
         return innerJson.length();
     }
 
     private int parseArrayValue(String key, String jsonString, int jsonStringIndex) throws Exception {
         String arrayString = JsonUtil.extractArray(jsonString, jsonStringIndex);
         JsonArray jsonArray = JsonArray.fromString(arrayString);
-        this.parseResult.add(key, jsonArray);
+        this.parseResult.addArray(key, jsonArray);
         return arrayString.length();
     }
 
-    private void parseDoubleValue(String key, String value) {
-        this.parseResult.add(key, Double.parseDouble(value));
+    private void parseDoubleValue(String key, String value) throws Exception {
+        this.parseResult.addDouble(key, Double.parseDouble(value));
     }
 
-    private void parseIntValue(String key, String value) {
-        this.parseResult.add(key, Integer.parseInt(value));
+    private void parseIntValue(String key, String value) throws Exception {
+        this.parseResult.addInt(key, Integer.parseInt(value));
     }
 
     private int insertValue(String jsonString, int jsonStringIndex, char currentChar) throws Exception {

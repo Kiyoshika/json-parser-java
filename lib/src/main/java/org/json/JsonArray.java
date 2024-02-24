@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JsonArray {
-    private List<Object> arrayItems = new ArrayList<Object>();
+    private List<JsonItem> arrayItems = new ArrayList<JsonItem>();
 
     public JsonArray() {}
 
@@ -12,7 +12,7 @@ public class JsonArray {
         return this.arrayItems.size();
     }
 
-    public void add(Object item) {
+    public void add(JsonItem item) {
         this.arrayItems.add(item);
     }
 
@@ -20,32 +20,85 @@ public class JsonArray {
         this.arrayItems.remove(i);
     }
 
-    public Object get(int i) {
+    public JsonItem get(int i) {
         return this.arrayItems.get(i);
     }
 
     public JsonResult getObject(int i) {
-        return (JsonResult)this.arrayItems.get(i);
+        return this.get(i).getObject();
     }
 
     public int getInt(int i) {
-        return (int)this.get(i);
+        return this.get(i).getInt();
     }
 
     public String getString(int i) {
-        return (String)this.get(i);
+        return this.get(i).getString();
     }
 
     public double getDouble(int i) {
-        return (double)this.get(i);
+        return this.get(i).getDouble();
     }
 
     public JsonArray getArray(int i) {
-        return (JsonArray)this.get(i);
+        return this.get(i).getArray();
     }
 
     public boolean isNull(int i) {
-        return this.get(i) == null;
+        return this.get(i).isNull();
+    }
+
+    public void addString(String value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.STRING));
+    }
+
+    public void addInt(int value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.INTEGER));
+    }
+
+    public void addDouble(double value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.DOUBLE));
+    }
+
+    public void addObject(JsonResult value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.OBJECT));
+    }
+
+    public void addNull() {
+        this.arrayItems.add(new JsonItem(null, JsonType.NULL));
+    }
+
+    public void addArray(JsonArray value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.ARRAY));
+    }
+
+    public String toString() {
+        StringBuilder arrayString = new StringBuilder();
+        arrayString.append('[');
+
+        int n_items = this.arrayItems.size();
+        int i = 0;
+        for (JsonItem item : this.arrayItems) {
+            switch (item.getType()) {
+                case STRING:
+                    arrayString.append('"');
+                    arrayString.append(item.getValue());
+                    arrayString.append('"');
+                    break;
+                default:
+                    arrayString.append(item.getValue());
+                    break;
+            }
+
+            i += 1;
+            if (i < n_items) {
+                arrayString.append(',');
+            }
+        }
+
+        arrayString.append(']');
+
+        return arrayString.toString();
     }
 
     public static JsonArray fromString(String arrayString) throws Exception {
@@ -57,25 +110,25 @@ public class JsonArray {
             switch (JsonUtil.getValueType(arrayItem.charAt(0), arrayItem)) {
                 case STRING:
                     String content = arrayItem.substring(1, arrayItem.length() - 1);
-                    jsonArray.add(content);
+                    jsonArray.add(new JsonItem(content, JsonType.STRING));
                     break;
                 case INTEGER:
-                    jsonArray.add(Integer.parseInt(arrayItem));
+                    jsonArray.add(new JsonItem(Integer.parseInt(arrayItem), JsonType.INTEGER));
                     break;
                 case DOUBLE:
-                    jsonArray.add(Double.parseDouble(arrayItem));
+                    jsonArray.add(new JsonItem(Double.parseDouble(arrayItem), JsonType.DOUBLE));
                     break;
                 case NULL:
-                    jsonArray.add(null);
+                    jsonArray.add(new JsonItem(null, JsonType.NULL));
                     break;
                 case OBJECT:
                     JsonParser parser = new JsonParser();
                     JsonResult result = parser.parse(arrayItem);
-                    jsonArray.add(result);
+                    jsonArray.add(new JsonItem(result, JsonType.OBJECT));
                     break;
                 case ARRAY:
                     JsonArray array = JsonArray.fromString(arrayItem);
-                    jsonArray.add(array);
+                    jsonArray.add(new JsonItem(array, JsonType.ARRAY));
                     break;
                 case INVALID:
                     break;
