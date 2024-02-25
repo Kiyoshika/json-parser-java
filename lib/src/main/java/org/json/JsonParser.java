@@ -76,8 +76,6 @@ public class JsonParser {
                      */
                     case '{':
                     case '[':
-                    case 't':
-                    case 'f':
                     case 'n': {
                         if (this.currentState == JsonState.VALUE_CONTENT) {
                             this.nextState = JsonState.VALUE_KEY_SEPARATOR;
