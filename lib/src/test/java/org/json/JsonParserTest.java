@@ -4,6 +4,10 @@
 package org.json;
 
 import org.junit.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import static org.junit.Assert.*;
 
 public class JsonParserTest {
@@ -224,5 +228,12 @@ public class JsonParserTest {
         JsonResult result = parser.parse("{\"key1\":true,\"key2\":false}");
         assertTrue(result.getBoolean("key1"));
         assertFalse(result.getBoolean("key2"));
+    }
+
+    @Test public void largeJson() throws Exception {
+        // generated random large JSON file courtesty of https://json-generator.com/
+        String jsonString = new String(Files.readAllBytes(Paths.get("./src/test/resources/generated.json")));
+        // checking to make sure this parses without exceptions
+        JsonArray array = JsonArray.fromString(jsonString);
     }
 }

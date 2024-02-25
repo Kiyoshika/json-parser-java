@@ -161,13 +161,12 @@ public class JsonArray {
         // start at 1 to avoid the opening bracket '[', otherwise we parse an array infinitely until stack overflow
         for (int i = 1; i < arrayString.length() - 1; i++) {
             char currentChar = arrayString.charAt(i);
+            if (!insideQuotes && (currentChar == ' ' || currentChar == '\n' || currentChar == '\r' || currentChar == '\t')) {
+                continue;
+            }
 
             if (currentChar == '"') {
                 insideQuotes = !insideQuotes;
-            }
-
-            if (!insideQuotes && currentChar == ' ') {
-                continue;
             }
 
             if (!insideQuotes && currentChar == '{') {
