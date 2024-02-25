@@ -33,6 +33,10 @@ public class JsonItem {
         return (JsonResult)this.value;
     }
 
+    public boolean getBoolean() {
+        return (boolean)this.value;
+    }
+
     public boolean isNull() {
         return this.type == JsonType.NULL;
     }

@@ -20,6 +20,10 @@ public class JsonUtil {
             return JsonType.STRING;
         }
 
+        if (value.equals("true") || value.equals("false")) {
+            return JsonType.BOOLEAN;
+        }
+
         if (value.indexOf('.') != -1) {
             return JsonType.DOUBLE;
         }

@@ -76,6 +76,8 @@ public class JsonParser {
                      */
                     case '{':
                     case '[':
+                    case 't':
+                    case 'f':
                     case 'n': {
                         if (this.currentState == JsonState.VALUE_CONTENT) {
                             this.nextState = JsonState.VALUE_KEY_SEPARATOR;
@@ -208,6 +210,17 @@ public class JsonParser {
             this.parseResult.addNull(key);
     }
 
+    private int parseBooleanValue(String key, String value) throws Exception {
+        // value is pre-sanitized so it will either be true/false
+        if (value.equals("true")) {
+            this.parseResult.addBoolean(key, true);
+        } else if (value.equals("false")) {
+            this.parseResult.addBoolean(key, false);
+        }
+
+        return value.length();
+    }
+
     private int parseObjectValue(String key, String jsonString, int jsonStringIndex) throws Exception {
         String innerJson = JsonUtil.extractJson(jsonString, jsonStringIndex);
         if (innerJson == null) {
@@ -278,6 +291,11 @@ public class JsonParser {
                 this.parseIntValue(keyString, valueString);
                 this.resetKeyValue();
                 return 0;
+            
+            case BOOLEAN:
+                offset = this.parseBooleanValue(keyString, valueString);
+                this.resetKeyValue();
+                return offset;
             
             case INVALID:
                 throw new Exception("Invalid value type found.");
