@@ -44,6 +44,10 @@ public class JsonArray {
         return this.get(i).getArray();
     }
 
+    public boolean getBoolean(int i) {
+        return this.get(i).getBoolean();
+    }
+
     public boolean isNull(int i) {
         return this.get(i).isNull();
     }
@@ -70,6 +74,10 @@ public class JsonArray {
 
     public void addArray(JsonArray value) {
         this.arrayItems.add(new JsonItem(value, JsonType.ARRAY));
+    }
+
+    public void addBoolean(boolean value) {
+        this.arrayItems.add(new JsonItem(value, JsonType.BOOLEAN));
     }
 
     public String toString() {
@@ -130,6 +138,13 @@ public class JsonArray {
                     JsonArray array = JsonArray.fromString(arrayItem);
                     jsonArray.add(new JsonItem(array, JsonType.ARRAY));
                     break;
+                case BOOLEAN:
+                    // value is pre-sanitized so it will either be true/false
+                    boolean value = true;
+                    if (arrayItem.equals("false")) {
+                        value = false;
+                    }
+                    jsonArray.add(new JsonItem(value, JsonType.BOOLEAN));
                 case INVALID:
                     break;
             }
@@ -158,7 +173,7 @@ public class JsonArray {
             if (!insideQuotes && currentChar == '{') {
                 String body = JsonUtil.extractStringBetween(arrayString, i, '{', '}', true);
                 splitItems.add(body);
-                i += body.length() - 1;
+                i += body.length();
                 currentItem = new StringBuilder();
                 continue;
             }
@@ -166,7 +181,7 @@ public class JsonArray {
             if (!insideQuotes && currentChar == '[') {
                 String body = JsonUtil.extractStringBetween(arrayString, i, '[', ']', true);
                 splitItems.add(body);
-                i += body.length() - 1;
+                i += body.length();
                 currentItem = new StringBuilder();
                 continue;
             }

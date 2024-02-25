@@ -80,7 +80,7 @@ public class JsonParserTest {
 
     @Test public void arrayValue() throws Exception {
         JsonParser parser = new JsonParser();
-        JsonResult result = parser.parse("{ \"key\": [\"string one\", -123, 2.345, null, [1, 2, 3], { \"inner key\": \"value\" }]}");
+        JsonResult result = parser.parse("{ \"key\": [\"string one\", -123, 2.345, null, [1, 2, 3], { \"inner key\": \"value\" }, true]}");
         JsonArray array = result.getArray("key");
         assertEquals(array.getString(0), "string one");
         assertEquals(array.getInt(1), -123);
@@ -92,6 +92,7 @@ public class JsonParserTest {
         assertEquals(innerArray.getInt(2), 3);
         JsonResult innerObject = array.getObject(5);
         assertEquals(innerObject.getString("inner key"), "value");
+        assertTrue(array.getBoolean(6));
     }
 
     @Test public void badNullValues() throws Exception {
@@ -199,6 +200,7 @@ public class JsonParserTest {
         array.addDouble(3.14159);
         array.addNull();
         array.addObject(json);
+        array.addBoolean(true);
 
         JsonResult json2 = new JsonResult();
         json2.addString("key", "some value");
@@ -207,11 +209,20 @@ public class JsonParserTest {
         json2.addNull("key4");
         json2.addObject("key5", json);
         json2.addArray("key6", array);
+        json2.addBoolean("key7", false);
 
         String jsonString = json2.toString();
+        System.out.println(jsonString); // check the string in the debug console
 
         // check if string parses back into json without errors
         JsonParser parser = new JsonParser();
         parser.parse(jsonString);
+    }
+
+    @Test public void booleanValues() throws Exception {
+        JsonParser parser = new JsonParser();
+        JsonResult result = parser.parse("{\"key1\":true,\"key2\":false}");
+        assertTrue(result.getBoolean("key1"));
+        assertFalse(result.getBoolean("key2"));
     }
 }

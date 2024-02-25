@@ -1,5 +1,5 @@
 # Java JSON Parser
-This is a very minimalistic JSON parser I wrote to practice Java. It is not feature complete and probably wouldn't recommend using it in production.
+This is a very minimalistic JSON parser I wrote to practice Java. Use in production at your own risk (:
 
 The parser works as a very basic state machine that uses either expected tokens or termination tokens to proceed to the next state.
 
@@ -9,13 +9,12 @@ The `master` branch is the active development branch and my be unstable compared
 If you're looking for a more "stable" version, check the [releases](https://github.com/Kiyoshika/json-parser-java/releases).
 
 ## Current Features
-* Can parse `String`, `int`, `double`, `Object` (nested JSON), `null` and `Array` values.
+* Can parse `String`, `int`, `double`, `boolean`, `Object` (nested JSON), `null` and `Array` values.
 * Modifying/creating JSON (`JsonResult`) objects/arrays
 * Writing JSON objects/arrays to string
 
 ## Upcoming Features
 * Reflection to parse a JSON directly into a user-defined class
-* Support for boolean values
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
@@ -35,7 +34,8 @@ String jsonString = """
         \"key2\": 1.23,
         \"key3\": \"Hello, world!\",
         \"key4\": null,
-        \"key5\": [1, 2.2, [1, 2, 3], { \"inner key\": \"inner value\"}]
+        \"key5\": [1, 2.2, [1, 2, 3], { \"inner key\": \"inner value\"}, false],
+        \"key6\": true
     }
     """;
 JsonResult result = parser.parse(jsonString);
@@ -45,6 +45,7 @@ int innerKey = result.getObject("key").getInt("innerkey"); // 10
 double key2 = result.getDouble("key2"); // 1.23
 String key3 = result.getString("key3"); // Hello, world!
 boolean key4 = result.isNull("key4"); // true
+boolean key6 = result.getBoolean("key6"); // true
 
 // handling arrays
 JsonArray key5 = result.getArray("key5");
@@ -52,6 +53,7 @@ int arrayValue1 = key5.getInt(0); // 1
 double arrayValue2 = key5.getDouble(1); // 2.2
 JsonArray arrayValue3 = key5.getArray(2); // [1, 2, 3]
 JsonResult arrayValue4 = key5.getObject(3); // { "inner key": "inner value" }
+boolean arrayValue5 = key5.getBoolean(4); // false
 
 // overwrite values
 // overwrites key2 from 1.23 -> "hello"

@@ -64,6 +64,14 @@ public class JsonResult {
         this.items.put(key, new JsonItem(value, JsonType.OBJECT));
     }
 
+    public void addBoolean(String key, boolean value) throws Exception {
+        if (key == null) {
+            throw new Exception(this.NON_NULL_KEY_MSG);
+        }
+
+        this.items.put(key, new JsonItem(value, JsonType.BOOLEAN));
+    }
+
     public <T> T get(String key) {
         return (T) this.items.get(key).getValue();
     }
@@ -86,6 +94,10 @@ public class JsonResult {
 
     public JsonArray getArray(String key) {
         return (JsonArray)this.get(key);
+    }
+
+    public boolean getBoolean(String key) {
+        return (boolean)this.get(key);
     }
 
     public void setValue(String key, JsonItem value) {

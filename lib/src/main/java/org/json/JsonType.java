@@ -7,5 +7,6 @@ public enum JsonType {
     STRING,
     ARRAY,
     OBJECT,
-    NULL
+    NULL,
+    BOOLEAN
 }
