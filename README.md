@@ -15,6 +15,7 @@ If you're looking for a more "stable" version, check the [releases](https://gith
 
 ## Upcoming Features
 * Reflection to parse a JSON directly into a user-defined class
+* Support for boolean values
 
 ## Known Issues
 * Parser may break if keys or values contain escaped quotes
